@@ -1,0 +1,28 @@
+{
+  "name": "project-clicker",
+  "version": "1.0.0",
+  "main": "main.js",
+  "dependencies": {
+    "playwright": "^1.40.0"
+  },
+  "scripts": {
+    "start": "electron main.js",
+    "build": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^27.1.0"
+  },
+  "build": {
+    "asar": false,
+    "appId": "com.yourcompany.yourapp",
+    "productName": "YourAppName",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "index.html"
+    ],
+    "extends": null
+  } 
+}
