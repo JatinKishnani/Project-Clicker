@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Electron File Creator</title>
+    <style>
+      .hidden {
+        display: none;
+      }
+      .dropdown {
+        position: relative;
+        display: inline-block;
+      }
+
+      .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: #f9f9f9;
+        min-width: 160px;
+        box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+        padding: 12px 16px;
+        z-index: 1;
+      }
+
+      .dropdown:hover .dropdown-content {
+        display: block;
+      }
+
+      .arrow {
+        display: inline-block;
+        border: solid black;
+        border-width: 0 2px 2px 0;
+        padding: 3px;
+        transform: rotate(45deg);
+        transition: transform 0.3s ease;
+      }
+    </style>
+  </head>
+  <body>
+    <section>
+      <form id="user_searchForm">
+        <p>Users</p>
+        <label for="user_searchInput">Search Users:</label>
+        <input type="text" id="user_searchInput" oninput="user_search()" />
+
+        <div id="user_results"></div>
+
+        <button type="button" onclick="user_submitForm()">Submit</button>
+      </form>
+    </section>
+
+    <hr />
+
+    <section id="action_section">
+      <form id="action_searchForm">
+        <p>Actions</p>
+        <label for="action_searchInput">Search Actions:</label>
+        <input type="text" id="action_searchInput" oninput="action_search()" />
+
+        <div class="dropdown">
+          <br /><br /><span>Slack Actions <br /></span>
+          <div class="dropdown-content">
+            <input type="checkbox" id="login_checkbox" hidden disabled /><span
+              id="login_status_text"
+              >Updating Login Status...</span
+            >
+            <br />
+            Subdomain <input value="zluri-dev" readonly /> <br />
+            <button id="loginBtn">Login</button>
+          </div>
+        </div>
+        <div id="action_results" hidden></div>
+        <br />
+        <button type="button" onclick="action_submitForm()">Submit</button>
+      </form>
+    </section>
+
+    <script>
+      var { ipcRenderer } = require("electron");
+      ipcRenderer.on("msg", async function (event, data) {
+        document.getElementById("login_checkbox").hidden = false;
+        document.getElementById("action_results").hidden = false;
+        document.getElementById("login_checkbox").checked = data;
+        document.getElementById("login_status_text").innerHTML = "Logged In";
+        console.log(data);
+      });
+
+      var loginBtn = document.getElementById("loginBtn");
+      loginBtn.addEventListener("click", function () {
+        ipcRenderer.send("login");
+      });
+
+      let userArr;
+      let ActionArr;
+
+      function toggleSection() {
+        const section = document.getElementById("action_section");
+        section.classList.toggle("hidden");
+      }
+
+      const user_options = ["a@gmail.com", "b@gmail.com", "c@gmail.com"];
+
+      function user_search() {
+        const searchTerm = document
+          .getElementById("user_searchInput")
+          .value.toLowerCase();
+        const resultsContainer = document.getElementById("user_results");
+        resultsContainer.innerHTML = "";
+
+        user_options.forEach((option) => {
+          if (option.toLowerCase().includes(searchTerm)) {
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.value = option;
+            checkbox.id = "user";
+
+            const label = document.createElement("label");
+            label.textContent = option;
+
+            resultsContainer.appendChild(checkbox);
+            resultsContainer.appendChild(label);
+            resultsContainer.appendChild(document.createElement("br"));
+          }
+        });
+      }
+      user_search();
+      toggleSection();
+
+      function user_submitForm() {
+        const checkedOptions = Array.from(
+          document.querySelectorAll('input[id="user"]:checked')
+        ).map((checkbox) => checkbox.value);
+
+        userArr = checkedOptions;
+        console.log("Checked Options:", checkedOptions);
+
+        toggleSection();
+      }
+      const action_options = ["Invite User", "Revoke User"];
+
+      function action_search() {
+        const searchTerm = document
+          .getElementById("action_searchInput")
+          .value.toLowerCase();
+        const resultsContainer = document.getElementById("action_results");
+        resultsContainer.innerHTML = "";
+
+        action_options.forEach((option) => {
+          if (option.toLowerCase().includes(searchTerm)) {
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.value = option;
+            checkbox.id = "action";
+
+            const label = document.createElement("label");
+            label.textContent = option;
+
+            resultsContainer.appendChild(checkbox);
+            resultsContainer.appendChild(label);
+            resultsContainer.appendChild(document.createElement("br"));
+          }
+        });
+      }
+      action_search();
+
+      function action_submitForm() {
+        const checkedOptions = Array.from(
+          document.querySelectorAll('input[id="action"]:checked')
+        ).map((checkbox) => checkbox.value);
+        ActionArr = checkedOptions;
+        console.log("Checked Options:", checkedOptions);
+        ipcRenderer.send("invokeAction", { users: userArr, actions: ActionArr });
+
+        //toggleSection();
+      }
+    </script>
+  </body>
+</html>
