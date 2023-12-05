@@ -1,14 +1,13 @@
 
 
-async function main() {
-    const { chromium } = require('playwright');    
-const browser = await chromium.launchPersistentContext("./UserDataDir",{ headless: false });
+async function codeGen() {
+    const browser = await chromium.launchPersistentContext("./UserDataDir", {
+        headless: false,
+      });
+    
+      const page = await browser.newPage();
+    
+      page.pause();}
 
-const page = await browser.newPage();
 
-page.pause();}
-
-main()
-
-
-module.exports = main
+module.exports = codeGen
