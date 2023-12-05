@@ -1,8 +1,10 @@
-const { app, BrowserWindow } = require('electron');
-const path = require('path');
-const fs = require('fs');
-const {chromium, firefox} = require('playwright')
-let {ipcMain} = require('electron');
+const { app, BrowserWindow } = require("electron");
+const path = require("path");
+const fs = require("fs");
+const { chromium, firefox } = require("playwright");
+let { ipcMain } = require("electron");
+const login = require("./Login Modules/login");
+const checkLoginModule = require("./Login Modules/checkLogin");
 
 let mainWindow;
 
@@ -14,92 +16,76 @@ function createWindow() {
       nodeIntegration: true, // Disable nodeIntegration
       contextIsolation: false, // Enable context isolation
     },
-    preload: path.join(__dirname, 'preload.js'),
+    preload: path.join(__dirname, "preload.js"),
   });
 
-  mainWindow.loadFile('index.html');
+  mainWindow.loadFile("index.html");
 
-  mainWindow.on('closed', function () {
+  mainWindow.on("closed", function () {
     mainWindow = null;
   });
 }
 
-
 app.whenReady().then(() => {
   createWindow();
-  //checkLogin()
-  dothis()
+  checkLogin();
+  //CodeGen()
 });
 
-async function dothis() {
-    const browser = await chromium.launchPersistentContext("./UserDataDir",{ headless: false });
-
-    const page = await browser.newPage();
-
-page.pause();
-}
-async function checkLogin() {
-    const browser = await chromium.launchPersistentContext("./UserDataDir",{ headless: false });
-  
-    // Create a new page
-    const page = await browser.newPage();
-  
-    // Navigate to a website
-    await page.goto("https://zluri-dev.slack.com/admin");
-    if(page.url() == "https://zluri-dev.slack.com/?redir=%2Fadmin"){
-        mainWindow.webContents.send("msg", false)
-    }
-    else {
-        mainWindow.webContents.send("msg", true)
-    }
-
-    await browser.close()
-}
-
-async function login() {
-    const browser = await chromium.launchPersistentContext("./UserDataDir",{ headless: false });
-  
-    // Create a new page
-    const page = await browser.newPage();
-  
-    // Navigate to a website
-    await page.goto("https://zluri-dev.slack.com/admin");
-
-}
-
-ipcMain.on('login',async function(event, data){
-    login()
-})
 
 
-
-function loadDynamicModule() {
-  // Load a module dynamically
-  const dynamicModule = require('./x.js');
-
-  console.log(dynamicModule.toString())
-  // Use the module as needed
-  dynamicModule();
-}
-app.on('window-all-closed', function () {
-  if (process.platform !== 'darwin') app.quit();
+app.on("window-all-closed", function () {
+  if (process.platform !== "darwin") app.quit();
 });
 
-app.on('activate', function () {
+app.on("activate", function () {
   if (mainWindow === null) createWindow();
 });
 
-ipcMain.on('invokeAction',async function(event, data){
 
-    console.log(data)
-    // Launch a browser
-    const browser = await chromium.launchPersistentContext("./UserDataDir",{ headless: false });
+//----------------------App Boiler Plate ends here-------------------------//
 
 
+//Dev testing
+async function CodeGen() {
+  const codeGen = require('./codegen');
+  codeGen()
+}
+
+
+//Startup Login Module
+async function checkLogin() {
+  const result = await checkLoginModule(
+    "https://zluri-dev.slack.com/admin",
+    "https://zluri-dev.slack.com/?redir=%2Fadmin"
+  );
+  mainWindow.webContents.send("msg", result);
+}
+
+
+
+//IPC Reciver Events
+
+  //User manual login
+ipcMain.on("login", async function (event, data) {
+  login("https://zluri-dev.slack.com/admin");
 });
 
 
 
-// await page2.getByRole('button', { name: 'Invite People' }).click();
-// await page2.locator('.c-multi_select_input').click();
-// await page2.getByLabel('Emails to invite').fill(' \nb@gmail.com\n \nc@gmail.com\n \nd@gmail.com\n ');
+  //Action Execution
+ipcMain.on("invokeAction", async function (event, data) {
+  console.log(data);
+
+  const users = data.users;
+  const Actions = data.Actions;
+
+  Actions.forEach(async action => {
+    const ActionModule = require(`./Playwright Action Codes/Slack/${action}`)
+    await ActionModule(users)
+  });
+  
+});
+
+
+//IPC Sender Events
