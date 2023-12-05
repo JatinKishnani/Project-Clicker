@@ -78,9 +78,10 @@ ipcMain.on("invokeAction", async function (event, data) {
   console.log(data);
 
   const users = data.users;
-  const Actions = data.Actions;
+  const actions = data.actions;
 
-  Actions.forEach(async action => {
+  console.log(users, actions)
+  actions.forEach(async action => {
     const ActionModule = require(`./Playwright Action Codes/Slack/${action}`)
     await ActionModule(users)
   });
